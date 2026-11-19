@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bottega Grom – 3D store model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --navy:#1F2A44; --terra:#C46A3B; --cream:#F6F1E7; --sand:#E2D8C6; --grey:#6A7080; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#efe8dc; font-family:Inter, system-ui, sans-serif; color:var(--navy); }
+  #c { position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+  .top { position:fixed; left:14px; top:12px; pointer-events:none; background:rgba(246,241,231,.9); padding:8px 14px 9px; border-radius:12px; box-shadow:0 6px 20px rgba(31,42,68,.12); }
+  .kicker { font-size:11px; letter-spacing:.18em; font-weight:600; color:var(--terra); text-transform:uppercase; }
+  .title { font-family:Fraunces, Georgia, serif; font-size:30px; font-weight:600; margin:2px 0 0; }
+  .payoff { font-family:Fraunces, Georgia, serif; font-style:italic; font-size:15px; color:var(--terra); }
+  .panel { position:fixed; left:20px; bottom:20px; width:min(420px, calc(100% - 40px)); background:rgba(246,241,231,.94);
+           border-radius:14px; box-shadow:0 10px 30px rgba(31,42,68,.18); padding:16px 18px 14px; backdrop-filter:blur(6px); }
+  .steps { display:flex; gap:6px; margin-bottom:10px; }
+  .steps button { flex:1; border:0; background:transparent; padding:6px 0 0; cursor:pointer; font:600 10px Inter, sans-serif;
+                  letter-spacing:.08em; color:#9aa0ad; text-transform:uppercase; border-top:3px solid #ddd3c2; text-align:left; }
+  .steps button.on { color:var(--navy); border-top-color:var(--terra); }
+  .ph { font-size:11px; letter-spacing:.14em; font-weight:600; color:var(--terra); text-transform:uppercase; }
+  .ptitle { font-family:Fraunces, Georgia, serif; font-size:21px; font-weight:600; margin:2px 0 6px; }
+  .ptext { font-size:13.5px; line-height:1.5; margin:0 0 6px; }
+  .think { font-family:Fraunces, Georgia, serif; font-style:italic; color:var(--terra); font-size:14px; margin:0 0 10px; }
+  .nav { display:flex; gap:8px; align-items:center; }
+  .nav button { border:0; border-radius:999px; padding:8px 14px; font:600 12.5px Inter, sans-serif; cursor:pointer; }
+  .prev { background:#e6ddcd; color:var(--navy); } .next { background:var(--navy); color:#fff; }
+  .free { margin-left:auto; background:transparent; color:var(--grey); text-decoration:underline; padding:8px 4px !important; }
+  .tag { position:fixed; transform:translate(-50%,-50%); pointer-events:auto; cursor:pointer; display:flex; align-items:center; gap:6px;
+         white-space:nowrap; font:600 11.5px Inter, sans-serif; color:var(--navy); transition:opacity .25s; }
+  .tag i { font-style:normal; width:22px; height:22px; border-radius:50%; background:var(--terra); color:#fff; display:grid; place-items:center;
+           font-size:11px; box-shadow:0 0 0 4px rgba(196,106,59,.25); }
+  .tag span { background:rgba(246,241,231,.92); padding:3px 8px; border-radius:6px; box-shadow:0 2px 8px rgba(31,42,68,.12); }
+  .card { position:fixed; right:20px; top:18px; width:min(300px, calc(100% - 40px)); background:rgba(246,241,231,.95); border-radius:12px;
+          padding:14px 16px; box-shadow:0 10px 30px rgba(31,42,68,.18); display:none; }
+  .card h3 { font-family:Fraunces, Georgia, serif; margin:0 0 6px; font-size:18px; }
+  .card p { margin:0; font-size:13px; line-height:1.5; }
+  .card button { position:absolute; right:8px; top:6px; border:0; background:none; font-size:18px; cursor:pointer; color:var(--grey); }
+  .note { position:fixed; right:20px; bottom:14px; font-size:10.5px; color:#8b8f99; max-width:300px; text-align:right; }
+  .hint { position:fixed; right:20px; bottom:34px; font-size:11.5px; color:var(--grey); }
+  #loading { position:fixed; inset:0; display:grid; place-items:center; background:#efe8dc; font-family:Fraunces, serif; font-size:20px; z-index:9; }
+  @media (max-width: 700px) {
+    .top { left:10px; top:10px; background:rgba(246,241,231,.9); padding:8px 12px; border-radius:10px; } .title { font-size:22px; } .payoff { font-size:13px; }
+    .panel { left:10px; right:10px; bottom:10px; width:auto; padding:12px 14px; }
+    .ptext { font-size:12.5px; } .note, .hint { display:none; } .card { right:10px; top:auto; bottom:250px; }
+    .tag span { display:none; }
+  }
+</style>
+</head>
+<body>
+<div id="loading">Opening the Bottega…</div>
+<canvas id="c"></canvas>
+<div class="top">
+  <div class="kicker">LUISS × Grom · Retail Experience Concept</div>
+  <div class="title">Bottega Grom</div>
+  <div class="payoff">From ingredient to cone. See the final gesture here.</div>
+</div>
+<div id="tags"></div>
+<div class="card" id="card"><button id="cardx" aria-label="Close">×</button><h3 id="ct"></h3><p id="cp"></p></div>
+<div class="panel">
+  <div class="steps" id="steps"></div>
+  <div class="ph" id="ph"></div>
+  <div class="ptitle" id="pt"></div>
+  <p class="ptext" id="pp"></p>
+  <p class="think" id="pk"></p>
+  <div class="nav"><button class="prev" id="prev">← Back</button><button class="next" id="next">Next moment →</button><button class="free" id="free">Explore freely</button></div>
+</div>
+<div class="note"><b>Drag to orbit · scroll or pinch to zoom · tap a number</b><br>Indicative model by the group, in the colours of the concept video: cream walls, Grom blue, sea-blue counter, brass. Names, origins and dates are examples.</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+(function () {
+THREE.ColorManagement.legacyMode = false;
+const L = 10, D = 5, HH = 3.4;   // store: 10 m deep (x), 5 m wide (z), 3.4 m high
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.physicallyCorrectLights = true;
+
+const scene = new THREE.Scene();
+{ const c = document.createElement('canvas'); c.width = 16; c.height = 512; const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, 512); gr.addColorStop(0, '#27365f'); gr.addColorStop(.45, '#6f6c8e'); gr.addColorStop(.75, '#e3a47a'); gr.addColorStop(1, '#f3c58f');
+  g.fillStyle = gr; g.fillRect(0, 0, 16, 512); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; scene.background = t; }
+scene.fog = new THREE.Fog(0xb99a86, 24, 46);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 100);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 0.6; controls.maxDistance = 16;
+controls.target.set(5, 1, 2.5);
+
+// ---------- procedural textures ----------
+function rnd(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+function tex(w, h, draw, rep) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+  if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); }
+  return t;
+}
+function noise(g, w, h, n, alpha, r, col) {
+  for (let i = 0; i < n; i++) { g.fillStyle = col(r()); g.globalAlpha = alpha * r(); g.fillRect(r() * w, r() * h, 1 + r() * 3, 1 + r() * 3); }
+  g.globalAlpha = 1;
+}
+const woodTex = (base, dark, seed) => tex(512, 512, (g, w, h) => {
+  const r = rnd(seed); g.fillStyle = base; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 70; i++) {
+    g.strokeStyle = dark; g.globalAlpha = 0.05 + r() * 0.12; g.lineWidth = 1 + r() * 3;
+    const y = r() * h; g.beginPath(); g.moveTo(0, y);
+    for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x / 70 + i) * 4 + (r() - .5) * 3);
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+}, [1, 1]);
+const concrete = tex(512, 512, (g, w, h) => {
+  const r = rnd(7); g.fillStyle = '#cfc5b4'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const v = Math.floor(r() * 14) - 7; g.fillStyle = `rgb(${216 + v},${207 + v},${191 + v})`; g.fillRect(i * 128 + 2, j * 128 + 2, 124, 124); }
+  for (let k = 0; k < 2600; k++) { const c = ['#b9a58a', '#8f8576', '#e8dfcf', '#c98b5a', '#9aa39a'][k % 5]; g.fillStyle = c; g.globalAlpha = .55; const x = r() * w, y = r() * h, q = 1 + r() * 3.5; g.fillRect(x, y, q, q * (.6 + r())); }
+  g.globalAlpha = 1;
+  noise(g, w, h, 9000, 0.35, r, v => v > .5 ? '#c9c0b2' : '#e6e0d5');
+  noise(g, w, h, 600, 0.5, r, v => v > .5 ? '#b8ae9f' : '#f0ebe2');
+  g.strokeStyle = 'rgba(160,150,135,.35)'; g.lineWidth = 2; g.strokeRect(0, 0, w, h);
+}, [5, 2.5]);
+const plaster = tex(512, 512, (g, w, h) => {
+  const r = rnd(11); g.fillStyle = '#f1e9db'; g.fillRect(0, 0, w, h);
+  noise(g, w, h, 7000, 0.18, r, v => v > .5 ? '#e4d9c6' : '#f6efe3');
+}, [4, 2]);
+const marble = tex(512, 256, (g, w, h) => {
+  const r = rnd(3); g.fillStyle = '#ece8e1'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 18; i++) {
+    g.strokeStyle = 'rgba(150,140,128,' + (0.08 + r() * .18) + ')'; g.lineWidth = .5 + r() * 1.5;
+    g.beginPath(); let x = r() * w, y = 0; g.moveTo(x, y);
+    while (y < h) { x += (r() - .5) * 40; y += 10 + r() * 20; g.lineTo(x, y); } g.stroke();
+  }
+}, [2, 1]);
+const paving = tex(512, 512, (g, w, h) => {
+  const r = rnd(5); g.fillStyle = '#8f8a83'; g.fillRect(0, 0, w, h);
+  const s = 64;
+  for (let y = 0; y < h; y += s) for (let x = 0; x < w; x += s) {
+    const v = 120 + r() * 40; g.fillStyle = `rgb(${v},${v - 4},${v - 10})`; g.fillRect(x + 2, y + 2, s - 4, s - 4);
+  }
+  noise(g, w, h, 4000, .25, r, v => v > .5 ? '#6f6a63' : '#b1aca4');
+}, [8, 8]);
+
+function label(lines, opts) {
+  const o = Object.assign({ w: 1024, h: 512, bg: '#2b2f2c', fg: '#f3efe6', font: 'Fraunces', size: 64, pad: 60, chalk: false, align: 'left' }, opts);
+  return tex(o.w, o.h, (g, w, h) => {
+    g.fillStyle = o.bg; g.fillRect(0, 0, w, h);
+    if (o.chalk) { const r = rnd(9); noise(g, w, h, 5000, .08, r, () => '#ffffff'); }
+    let y = o.pad + o.size;
+    lines.forEach(l => {
+      const L2 = typeof l === 'string' ? { t: l } : l;
+      g.font = `${L2.italic ? 'italic ' : ''}${L2.weight || 500} ${L2.size || o.size}px ${L2.font || o.font}, Georgia, serif`;
+      g.fillStyle = L2.color || o.fg; g.textAlign = o.align;
+      g.fillText(L2.t, o.align === 'center' ? w / 2 : o.pad, y);
+      y += (L2.size || o.size) * (L2.gap || 1.35);
+    });
+  });
+}
+
+// ---------- materials ----------
+const M = {
+  floor: new THREE.MeshStandardMaterial({ map: concrete, roughness: .85 }),
+  wall: new THREE.MeshStandardMaterial({ map: plaster, roughness: .95 }),
+  oak: new THREE.MeshStandardMaterial({ map: woodTex('#c9a77c', '#8a6640', 21), roughness: .6 }),
+  oakDark: new THREE.MeshStandardMaterial({ map: woodTex('#a88257', '#6b4a2a', 22), roughness: .6 }),
+  marble: new THREE.MeshStandardMaterial({ map: marble, roughness: .25 }),
+  steel: new THREE.MeshStandardMaterial({ color: 0xf0f0f0, metalness: .7, roughness: .22 }),
+  brass: new THREE.MeshStandardMaterial({ color: 0xb8955a, metalness: .8, roughness: .3 }),
+  navy: new THREE.MeshStandardMaterial({ color: 0x1C2577, roughness: .55 }),
+  sea: new THREE.MeshStandardMaterial({ color: 0x1f4f7c, roughness: .45 }),
+  seaD: new THREE.MeshStandardMaterial({ color: 0x173c60, roughness: .5 }),
+  stoneTop: new THREE.MeshStandardMaterial({ color: 0xeae5dc, roughness: .3 }),
+  glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: .05, transmission: .92, transparent: true, opacity: .25, thickness: .02 }),
+  jar: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .08, transmission: .9, transparent: true, opacity: .35 }),
+  figure: new THREE.MeshStandardMaterial({ color: 0xf2efe9, roughness: .9 }),
+  apron: new THREE.MeshStandardMaterial({ color: 0x1C2577, roughness: .8 }),
+  linen: new THREE.MeshStandardMaterial({ color: 0xe8dcc6, roughness: 1 }),
+  terra: new THREE.MeshStandardMaterial({ color: 0xb8673c, roughness: .9 }),
+  leaf: new THREE.MeshStandardMaterial({ color: 0x6f7f4f, roughness: .9 }),
+  paving: new THREE.MeshStandardMaterial({ map: paving, roughness: .9 }),
+  cone: new THREE.MeshStandardMaterial({ color: 0xc58b4a, roughness: .8 }),
+};
+const box = (w, h, d, m, x, y, z, cast = true) => {
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z);
+  b.castShadow = cast; b.receiveShadow = true; scene.add(b); return b;
+};
+const cyl = (rt, rb, h, m, x, y, z, seg = 32) => {
+  const c = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), m); c.position.set(x, y, z);
+  c.castShadow = true; c.receiveShadow = true; scene.add(c); return c;
+};
+const sph = (r, m, x, y, z, seg = 16) => {
+  const s = new THREE.Mesh(new THREE.SphereGeometry(r, seg, seg), m); s.position.set(x, y, z);
+  s.castShadow = true; scene.add(s); return s;
+};
+
+// ---------- shell ----------
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(L, D), M.floor);
+floor.rotation.x = -Math.PI / 2; floor.position.set(L / 2, 0, D / 2); floor.receiveShadow = true; scene.add(floor);
+const street = new THREE.Mesh(new THREE.PlaneGeometry(14, 22), M.paving);
+street.rotation.x = -Math.PI / 2; street.position.set(-7, -0.01, D / 2); street.receiveShadow = true; scene.add(street);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0xd9d1c3, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.position.set(5, -0.02, 2.5); scene.add(ground);
+
+const walls = [];
+function wall(w, h, x, y, z, ry, normal) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.18), M.wall);
+  m.position.set(x, y, z); m.rotation.y = ry; m.receiveShadow = true; m.castShadow = true; scene.add(m);
+  walls.push({ m, normal, point: new THREE.Vector3(x, y, z) }); return m;
+}
+wall(L, HH, L / 2, HH / 2, -0.09, 0, new THREE.Vector3(0, 0, 1));           // left wall (z = 0)
+wall(L, HH, L / 2, HH / 2, D + 0.09, 0, new THREE.Vector3(0, 0, -1));       // right wall (z = 5)
+wall(D + .36, HH, L + 0.09, HH / 2, D / 2, Math.PI / 2, new THREE.Vector3(-1, 0, 0)); // back wall
+// skirting in oak
+[box(L, 1.0, .04, M.sea, L / 2, .5, .02), box(L, .04, .05, M.brass, L / 2, 1.0, .03, false)].forEach(m => walls.push({ m, normal: walls[0].normal, point: walls[0].point }));
+[box(.04, 1.0, D, M.sea, L - .02, .5, D / 2), box(.05, .04, D, M.brass, L - .03, 1.0, D / 2, false)].forEach(m => walls.push({ m, normal: walls[2].normal, point: walls[2].point }));
+box(L, .1, .02, M.oakDark, L / 2, .05, D - .01, false);
+
+// ---------- façade (x = 0) ----------
+const fac = new THREE.Group(); scene.add(fac);
+const fbox = (w, h, d, m, x, y, z) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; fac.add(b); return b; };
+fbox(.25, .5, D + .36, M.navy, 0, HH - .25, D / 2);       // fascia
+fbox(.25, HH, .25, M.navy, 0, HH / 2, -.05);              // piers
+fbox(.25, HH, .25, M.navy, 0, HH / 2, D + .05);
+fbox(.25, HH - .5, .12, M.navy, 0, (HH - .5) / 2, 1.6);   // mullions around the door
+fbox(.25, HH - .5, .12, M.navy, 0, (HH - .5) / 2, 3.4);
+fbox(.22, .35, 1.6, M.navy, 0, .175, .8);                 // window plinths
+fbox(.22, .35, 1.6, M.navy, 0, .175, 4.2);
+fbox(.06, HH - 1.0, 1.48, M.glass, 0, .35 + (HH - 1.0) / 2 - .075, .8);
+fbox(.06, HH - 1.0, 1.48, M.glass, 0, .35 + (HH - 1.0) / 2 - .075, 4.2);
+fbox(.05, 2.6, 1.68, M.glass, -.02, 1.3, 2.5);            // glass door
+fbox(.05, 1.0, .05, M.brass, -.08, 1.1, 3.2);            // door handle
+// sign: GROM + neighbourhood name
+const signTex = label([{ t: 'GROM', size: 92, weight: 600, color: '#d9b27c', gap: 1.0 }, { t: 'Bottega · Roma Pantheon', size: 40, italic: true, weight: 400, color: '#f3efe6' }],
+  { w: 1400, h: 190, bg: '#1C2577', align: 'center', pad: 4 });
+const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.6, .48), new THREE.MeshStandardMaterial({ map: signTex, roughness: .6 }));
+{ // striped awning, blue and cream
+  const at = tex(512, 64, (g, w, h) => { for (let i = 0; i < 16; i++) { g.fillStyle = i % 2 ? '#F5EFE3' : '#1C2577'; g.fillRect(i * 32, 0, 32, h); } });
+  const aw = new THREE.Mesh(new THREE.PlaneGeometry(D + .2, 1.1), new THREE.MeshStandardMaterial({ map: at, roughness: .9, side: THREE.DoubleSide }));
+  aw.position.set(-.55, HH - .78, D / 2); aw.rotation.set(-Math.PI / 2, 0, Math.PI / 2); aw.rotateX(-.5); aw.castShadow = true; fac.add(aw);
+  for (let i = 0; i < 26; i++) { const v = new THREE.Mesh(new THREE.BoxGeometry(.02, .14, (D + .2) / 26), new THREE.MeshStandardMaterial({ color: i % 2 ? 0xF5EFE3 : 0x1C2577, roughness: .9 })); v.position.set(-1.03, HH - 1.08, -.1 + (i + .5) * (D + .2) / 26); fac.add(v); }
+  // hanging plants in the windows
+  [.8, 4.2].forEach(z => { const pot = new THREE.Mesh(new THREE.SphereGeometry(.13, 16, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xb4643a, roughness: .85 }));
+    pot.position.set(.35, 2.35, z); scene.add(pot); cyl(.004, .004, .7, M.navy, .35, 2.75, z, 6);
+    for (let k = 0; k < 9; k++) { const f = sph(.07 + (k % 3) * .02, M.leaf, .35 + Math.cos(k) * .1, 2.3 - (k % 4) * .09, z + Math.sin(k) * .1, 8); } });
+}
+sign.position.set(-.13, HH - .25, D / 2); sign.rotation.y = -Math.PI / 2; fac.add(sign);
+// awning-like lamps over the sign
+
+// ---------- the counter (code 1) ----------
+const CX0 = 3, CX1 = 7, CZ = 3.55;
+box(CX1 - CX0, .92, .62, M.sea, (CX0 + CX1) / 2, .46, CZ);                           // body
+for (let x = CX0 + .05; x < CX1; x += .09) box(.06, .8, .02, M.seaD, x, .48, CZ - .32, false); // slats
+box(CX1 - CX0, .025, .02, M.brass, (CX0 + CX1) / 2, .9, CZ - .335, false); box(CX1 - CX0, .06, .02, M.brass, (CX0 + CX1) / 2, .03, CZ - .335, false);
+box(CX1 - CX0 + .08, .06, .74, M.stoneTop, (CX0 + CX1) / 2, .95, CZ);                  // stone top
+// carapine: round wells with steel lids, some open
+const FLAV = [
+  ['Fragola', 0xe8a0a8], ['Pistacchio', 0x9dbb5b], ['Limone', 0xf3e27a], ['Cioccolato', 0x5a3826],
+  ['Nocciola', 0xc69a6b], ['Crema', 0xf5ecd8], ['Albicocca', 0xd98c3a], ['Mirtillo', 0x7b4a8a]];
+const lids = [];
+FLAV.forEach(([name, col], i) => {
+  const x = CX0 + .35 + i * .47;
+  cyl(.15, .15, .03, M.steel, x, .985, CZ + .05);                       // rim
+  const g = new THREE.Mesh(new THREE.SphereGeometry(.135, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: col, roughness: .5 }));
+  g.scale.y = .1; g.position.set(x, .998, CZ + .05); scene.add(g);
+  const hinge = new THREE.Group(); hinge.position.set(x, 1.012, CZ + .2); scene.add(hinge);
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(.155, .155, .02, 32), M.steel);
+  lid.position.set(0, .01, -.15); lid.castShadow = true; hinge.add(lid);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(.02, 12, 12), M.steel); knob.position.set(0, .03, -.15); hinge.add(knob);
+  const open = (i === 1 || i === 4);
+  hinge.rotation.x = open ? -1.25 : 0; lids.push({ hinge, open, i });
+  // flavour tag on the customer side
+  const t = label([{ t: name, size: 70, italic: true, weight: 500 }], { w: 512, h: 140, bg: '#f6f1e7', fg: '#1f2a44', pad: 28, align: 'center' });
+  const tag = new THREE.Mesh(new THREE.PlaneGeometry(.3, .082), new THREE.MeshStandardMaterial({ map: t, roughness: .8 }));
+  tag.position.set(x, .9, CZ - .375); tag.rotation.y = Math.PI; tag.rotation.y = 0; tag.lookAt(x, .9, CZ - 2); scene.add(tag);
+});
+// the reveal lid animates (opens towards the customer)
+const reveal = lids[0];
+// a finished cup with the seal (hazelnut) on the counter edge
+const cup = new THREE.Group(); cup.position.set(5.55, .98, CZ - .22); scene.add(cup);
+const cupBody = new THREE.Mesh(new THREE.CylinderGeometry(.05, .037, .07, 24, 1, true), new THREE.MeshStandardMaterial({ color: 0xf6f1e7, roughness: .7, side: THREE.DoubleSide }));
+cupBody.position.y = .035; cup.add(cupBody);
+const scoop = new THREE.Mesh(new THREE.SphereGeometry(.055, 24, 24), new THREE.MeshStandardMaterial({ color: 0xc69a6b, roughness: .6 }));
+scoop.scale.y = .8; scoop.position.y = .085; scoop.castShadow = true; cup.add(scoop);
+const seal = new THREE.Mesh(new THREE.SphereGeometry(.014, 16, 16), new THREE.MeshStandardMaterial({ color: 0x7a4f2c, roughness: .5 }));
+seal.scale.set(1, .85, 1); seal.position.y = .135; cup.add(seal);
+// a cone too
+box(.09, .07, .09, M.oakDark, 5.78, 1.015, CZ - .22);
+const cone = new THREE.Group(); cone.position.set(5.78, 1.0, CZ - .22); scene.add(cone);
+const cn = new THREE.Mesh(new THREE.ConeGeometry(.032, .13, 20), M.cone); cn.rotation.x = Math.PI; cn.position.y = .065; cone.add(cn);
+const cs = new THREE.Mesh(new THREE.SphereGeometry(.04, 20, 20), new THREE.MeshStandardMaterial({ color: 0x9fb26a, roughness: .6 })); cs.position.y = .15; cone.add(cs);
+const pseal = new THREE.Mesh(new THREE.SphereGeometry(.011, 12, 12), new THREE.MeshStandardMaterial({ color: 0x5d7d3a })); pseal.position.y = .19; cone.add(pseal);
+// cone holder and spatulas
+box(.3, .06, .1, M.oakDark, 3.35, 1.01, CZ - .2);
+for (let k = 0; k < 4; k++) { const c = new THREE.Mesh(new THREE.ConeGeometry(.03, .12, 16), M.cone); c.rotation.x = Math.PI; c.position.set(3.24 + k * .075, 1.07, CZ - .2); scene.add(c); }
+
+// back counter + shelves with cups
+box(CX1 - CX0, .9, .5, M.oakDark, (CX0 + CX1) / 2, .45, D - .27);
+box(CX1 - CX0, .04, .52, M.marble, (CX0 + CX1) / 2, .92, D - .27);
+for (let k = 0; k < 6; k++) cyl(.05, .04, .3, new THREE.MeshStandardMaterial({ color: 0xf6f1e7, roughness: .7 }), 3.3 + k * .12, 1.09, D - .3);
+box(1.2, .04, .25, M.oak, 6.3, 1.45, D - .14); box(1.2, .04, .25, M.oak, 6.3, 1.85, D - .14);
+for (let k = 0; k < 5; k++) { cyl(.06, .06, .16, M.jar, 5.85 + k * .22, 1.55, D - .14); cyl(.055, .055, .1, new THREE.MeshStandardMaterial({ color: [0xb08a63, 0x9fb26a, 0x5a3a2a, 0xe8c76a, 0xc98b5a][k], roughness: .9 }), 5.85 + k * .22, 1.52, D - .14); }
+
+// ---------- the ledger (code 3) ----------
+const ledgerTex = label([
+  { t: 'Oggi · Today', size: 64, italic: true, color: '#e9dcc0', gap: 1.6 },
+  { t: 'Nocciola  —  Piemonte · arrived Tuesday', size: 44, font: 'Inter', weight: 400 },
+  { t: 'Pistacchio  —  Sicily · arrived Monday', size: 44, font: 'Inter', weight: 400 },
+  { t: 'Limone  —  Amalfi coast · arrived today', size: 44, font: 'Inter', weight: 400, gap: 1.8 },
+  { t: 'Your bottegaio today: Giulia', size: 48, italic: true, color: '#d9b27c' },
+], { w: 1200, h: 600, bg: '#26302b', chalk: true, pad: 70 });
+const ledger = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 1.0), new THREE.MeshStandardMaterial({ map: ledgerTex, roughness: .95 }));
+ledger.position.set(4.3, 1.95, D - .03); ledger.rotation.y = Math.PI; scene.add(ledger);
+box(2.1, .06, .05, M.oakDark, 4.3, 2.48, D - .03); box(2.1, .06, .05, M.oakDark, 4.3, 1.42, D - .03);
+box(.06, 1.1, .05, M.oakDark, 3.25, 1.95, D - .03); box(.06, 1.1, .05, M.oakDark, 5.35, 1.95, D - .03);
+
+// ---------- the truth sentence (code 4) + till + passport (code 5) ----------
+const truthTex = label([
+  { t: '“Our gelato is born in Mappano,', size: 50, italic: true },
+  { t: 'with no flavourings or colourings.', size: 50, italic: true },
+  { t: 'Here we serve it as it deserves.”', size: 50, italic: true, color: '#c46a3b' },
+], { w: 1100, h: 330, bg: '#f6f1e7', fg: '#1f2a44', pad: 60 });
+const truth = new THREE.Mesh(new THREE.PlaneGeometry(1.5, .45), new THREE.MeshStandardMaterial({ map: truthTex, roughness: .9 }));
+truth.position.set(8.2, 1.9, D - .02); truth.rotation.y = Math.PI; scene.add(truth);
+box(1.56, .51, .02, M.oakDark, 8.2, 1.9, D - .005, false);
+// till block at the end of the counter
+box(.7, 1.0, .62, M.oak, 7.4, .5, CZ); box(.74, .05, .66, M.marble, 7.4, 1.02, CZ);
+box(.22, .14, .18, M.navy, 7.5, 1.12, CZ + .05);
+// passport stand
+const passTex = label([{ t: 'Seasons', size: 60, italic: true, color: '#d9b27c', gap: 1.05 }, { t: 'Passport', size: 60, weight: 600 }, { t: 'one stamp for every ritual', size: 30, font: 'Inter', weight: 400 }],
+  { w: 512, h: 300, bg: '#1f2a44', pad: 40 });
+const pass = new THREE.Mesh(new THREE.PlaneGeometry(.22, .13), new THREE.MeshStandardMaterial({ map: passTex, roughness: .7 }));
+pass.position.set(7.22, 1.13, CZ - .22); pass.rotation.x = -.35; pass.rotation.y = 0; pass.lookAt(5.5, 1.5, 1); scene.add(pass);
+box(.18, .02, .12, M.linen, 7.25, 1.055, CZ - .05);
+
+// ---------- the pantry (code 2) by the window ----------
+const PX = 1.15;
+box(1.9, .03, .42, M.sea, PX + .55, .45, .25); box(1.9, .03, .42, M.sea, PX + .55, 1.0, .25);
+box(1.9, .03, .42, M.sea, PX + .55, 1.55, .25); box(1.9, .03, .42, M.sea, PX + .55, 2.1, .25);
+box(.04, 2.15, .42, M.sea, PX - .4, 1.07, .25); box(.04, 2.15, .42, M.sea, PX + 1.5, 1.07, .25);
+const fill = [0xb08a63, 0x9fb26a, 0x6b4a2a, 0xe8c76a, 0xc98b5a, 0xd9c7a0, 0x7a4f2c];
+[.47, 1.02, 1.57].forEach((y, row) => {
+  for (let k = 0; k < 6; k++) {
+    const x = PX - .25 + k * .3, h = .2 + (k % 3) * .05;
+    cyl(.07, .07, h, M.jar, x, y + .015 + h / 2, .26);
+    cyl(.062, .062, h * .7, new THREE.MeshStandardMaterial({ color: fill[(k + row * 2) % fill.length], roughness: .95 }), x, y + .015 + h * .35, .26);
+    cyl(.072, .072, .02, M.oakDark, x, y + .025 + h, .26);
+  }
+});
+// window display table with lemons and hazelnuts (visible from the street)
+box(.9, .05, .6, M.oak, .75, .8, 1.15); [[.4, .9], [1.1, .9], [.4, 1.4], [1.1, 1.4]].forEach(([x, z]) => box(.04, .78, .04, M.oak, x, .39, z));
+const basket = cyl(.2, .16, .12, new THREE.MeshStandardMaterial({ color: 0xa4844f, roughness: 1 }), .6, .89, 1.15);
+const lemon = new THREE.MeshStandardMaterial({ color: 0xf0cf3a, roughness: .55 });
+for (let k = 0; k < 9; k++) { const s = sph(.045, lemon, .6 + Math.cos(k * 2.1) * .1, .97 + (k % 2) * .03, 1.15 + Math.sin(k * 2.1) * .1); s.scale.set(1.25, 1, 1); }
+const bowl = cyl(.16, .11, .08, M.oakDark, .98, .87, 1.2);
+const hz = new THREE.MeshStandardMaterial({ color: 0x8a5a33, roughness: .6 });
+for (let k = 0; k < 22; k++) sph(.018, hz, .98 + Math.cos(k) * .09 * (k % 3) / 2, .92 + (k % 4) * .008, 1.2 + Math.sin(k) * .09 * (k % 3) / 2, 8);
+const pantryTex = label([{ t: 'La dispensa', size: 70, italic: true, color: '#1C2577', gap: 1.1 }, { t: 'the ingredients of this season', size: 34, font: 'Inter', weight: 400, color: '#6a7080' }],
+  { w: 700, h: 220, bg: '#f6f1e7', pad: 40 });
+const pt = new THREE.Mesh(new THREE.PlaneGeometry(.9, .28), new THREE.MeshStandardMaterial({ map: pantryTex, roughness: .9 }));
+pt.position.set(PX + .55, 2.45, .02); scene.add(pt);
+
+// ---------- seating & harvest table (code 6) ----------
+box(2.5, .45, .45, M.oak, 8.6, .225, .3); box(2.5, .08, .42, M.linen, 8.6, .49, .3);
+box(2.5, .6, .06, M.linen, 8.6, .8, .06);
+[[7.8, 0xb4643a], [8.6, 0x9aa38a], [9.4, 0x1f4f7c]].forEach(([x, c]) => { const cu = box(.42, .32, .12, new THREE.MeshStandardMaterial({ color: c, roughness: 1 }), x, .7, .2); cu.rotation.x = -.25; });
+// globe lamps over the seating and wall sconces
+[[8.0, 1.05], [9.25, 1.05], [8.6, 2.75]].forEach(([x, z]) => {
+  cyl(.004, .004, 1.1, M.navy, x, HH - .55, z, 6);
+  sph(.15, new THREE.MeshStandardMaterial({ color: 0xfff4e2, emissive: 0xffcf8a, emissiveIntensity: 1.6, roughness: .4 }), x, HH - 1.2, z, 24);
+  const pl = new THREE.PointLight(0xffcf94, 3.5, 4, 2); pl.position.set(x, HH - 1.3, z); scene.add(pl);
+});
+[7.6, 9.6].forEach(x => { box(.06, .1, .04, M.brass, x, 1.95, .04);
+  const sc = new THREE.Mesh(new THREE.SphereGeometry(.08, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf6e7cf, emissive: 0xffcf8a, emissiveIntensity: 1.5, side: THREE.DoubleSide }));
+  sc.position.set(x, 2.0, .1); sc.rotation.x = Math.PI; scene.add(sc); });
+function table(x, z) {
+  cyl(.32, .32, .035, M.marble, x, .74, z, 40); cyl(.03, .03, .72, M.brass, x, .37, z, 12); cyl(.2, .22, .03, M.brass, x, .015, z, 24);
+}
+function chair(x, z, ry) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g);
+  const add = (geo, m, px, py, pz) => { const o = new THREE.Mesh(geo, m); o.position.set(px, py, pz); o.castShadow = true; o.receiveShadow = true; g.add(o); };
+  add(new THREE.BoxGeometry(.42, .04, .42), M.oak, 0, .45, 0);
+  add(new THREE.BoxGeometry(.42, .38, .03), M.oak, 0, .7, -.2);
+  [[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]].forEach(([a, b]) => add(new THREE.CylinderGeometry(.018, .018, .45, 8), M.oakDark, a, .225, b));
+}
+table(8.0, 1.05); chair(8.0, 1.6, Math.PI);
+table(9.25, 1.05); chair(9.25, 1.6, Math.PI);
+// harvest tasting board on the big table
+cyl(.45, .45, .04, M.oak, 8.6, .74, 2.75, 48); cyl(.04, .04, .72, M.oakDark, 8.6, .37, 2.75, 12); cyl(.25, .28, .03, M.oakDark, 8.6, .015, 2.75, 24);
+chair(8.0, 3.2, Math.PI * .75); chair(9.2, 3.2, -Math.PI * .75); chair(8.6, 2.05, 0);
+box(.42, .025, .18, M.oakDark, 8.6, .775, 2.75);
+[0x9fb26a, 0xb08a63, 0xf1e3a4].forEach((c, k) => { sph(.03, new THREE.MeshStandardMaterial({ color: c, roughness: .6 }), 8.48 + k * .12, .81, 2.75, 16); });
+// flowers on the tables, a table lamp
+[[8.0, 1.05], [9.25, 1.05]].forEach(([x, z]) => { cyl(.03, .025, .12, M.jar, x + .12, .82, z); [0, 1, 2].forEach(k => sph(.025, new THREE.MeshStandardMaterial({ color: [0xe8a0a8, 0xf3e27a, 0xffffff][k], roughness: .8 }), x + .12 + (k - 1) * .03, .92 + (k % 2) * .02, z + (k - 1) * .02, 8)); });
+cyl(.05, .07, .04, M.brass, 8.85, .78, 2.95); sph(.07, new THREE.MeshStandardMaterial({ color: 0xfff1d6, emissive: 0xffd9a0, emissiveIntensity: 1.4 }), 8.85, .88, 2.95, 16);
+// take-away shelf: "Da portare a casa"
+{ [1.25, 1.62].forEach(y => { box(.9, .03, .28, M.oak, 9.35, y, D - .16);
+    for (let i = 0; i < 4; i++) { const x = 9.0 + i * .23; cyl(.06, .055, .09, new THREE.MeshStandardMaterial({ color: 0xf7f3ec, roughness: .5 }), x, y + .06, D - .16); cyl(.064, .064, .02, M.sea, x, y + .115, D - .16); } });
+  const tk = label([{ t: 'DA PORTARE A CASA', size: 44, font: 'Inter', weight: 600, color: '#1C2577', gap: 1.3 }, { t: 'i gusti di questa stagione', size: 36, italic: true, color: '#3d3a35' }], { w: 600, h: 160, bg: '#F5EFE3', align: 'center', pad: 20 });
+  const tp = new THREE.Mesh(new THREE.PlaneGeometry(.6, .16), new THREE.MeshStandardMaterial({ map: tk, roughness: .9 })); tp.position.set(9.35, 1.95, D - .02); tp.rotation.y = Math.PI; scene.add(tp); }
+
+// ---------- scale figures (as in an architectural model) ----------
+const SKIN = [0xe0b896, 0xc99572, 0xa8754f], HAIR = [0x3a2a20, 0x6b4a2a, 0x1e1a18, 0xb08a5a];
+function person(x, z, ry, h = 1.7, apron = false, seated = false, top = 0xf2efe9, legs = 0x2f3440, skin = 0, hair = 0, reach = false) {
+  const TOP = new THREE.MeshStandardMaterial({ color: top, roughness: .9 }), LEG = new THREE.MeshStandardMaterial({ color: legs, roughness: .9 });
+  const SK = new THREE.MeshStandardMaterial({ color: SKIN[skin], roughness: .7 }), HR = new THREE.MeshStandardMaterial({ color: HAIR[hair], roughness: .8 });
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g);
+  const s = h / 1.7;
+  const add = (geo, m, px, py, pz, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(px * s, py * s, pz * s); o.scale.set(sx * s, sy * s, sz * s); o.castShadow = true; g.add(o); return o; };
+  if (!seated) { add(new THREE.CylinderGeometry(.07, .06, .82, 12), LEG, -.09, .41, 0); add(new THREE.CylinderGeometry(.07, .06, .82, 12), LEG, .09, .41, 0); }
+  else { add(new THREE.BoxGeometry(.32, .14, .45), LEG, 0, .5, .12); add(new THREE.CylinderGeometry(.06, .06, .45, 12), LEG, -.09, .22, .34); add(new THREE.CylinderGeometry(.06, .06, .45, 12), LEG, .09, .22, .34); }
+  const ty = seated ? .85 : 1.12;
+  add(new THREE.CapsuleGeometry(.16, .42, 6, 14), TOP, 0, ty, 0, 1, 1, .7);
+  if (apron) add(new THREE.BoxGeometry(.34, .6, .02), M.apron, 0, ty - .12, .12);
+  add(new THREE.CylinderGeometry(.04, .045, .08, 10), SK, 0, ty + .33, 0);
+  add(new THREE.SphereGeometry(.11, 18, 18), SK, 0, ty + .45, 0, 1, 1.08, 1);
+  add(new THREE.SphereGeometry(.115, 18, 12, 0, Math.PI * 2, 0, Math.PI / 1.9), HR, 0, ty + .47, -.01);
+  // a limb between two points (local coordinates)
+  const limb = (a, b, r, m) => { const A = new THREE.Vector3(...a).multiplyScalar(s), B = new THREE.Vector3(...b).multiplyScalar(s), d = B.clone().sub(A);
+    const o = new THREE.Mesh(new THREE.CapsuleGeometry(r * s, Math.max(.01, d.length() - 2 * r * s), 4, 12), m);
+    o.position.copy(A).add(B).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); o.castShadow = true; g.add(o); return o; };
+  // right arm hangs down
+  limb([.2, ty + .2, 0], [.23, ty - .22, .03], .045, TOP);
+  add(new THREE.SphereGeometry(.04, 10, 10), SK, .235, ty - .27, .04);
+  if (reach) {
+    // left arm reaches over the counter: shoulder -> elbow -> hand, holding the spatula in the open tub
+    const sh = [-.2, ty + .2, 0], el = [-.25, ty - .04, .2], ha = [-.2, ty - .07, .46];
+    limb(sh, el, .046, TOP); limb(el, ha, .04, TOP);
+    add(new THREE.SphereGeometry(.042, 12, 12), SK, ha[0], ha[1], ha[2]);
+    const sp = new THREE.Group(); sp.position.set(ha[0] * s, ha[1] * s, ha[2] * s); g.add(sp);
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .12, 10), new THREE.MeshStandardMaterial({ color: 0x2a2a28, roughness: .6 })); handle.position.y = .0; sp.add(handle);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(.05, .14, .006), M.steel); blade.position.set(0, -.12, .02); blade.rotation.x = .35; sp.add(blade);
+    sp.rotation.x = .5;
+  } else {
+    limb([-.2, ty + .2, 0], [-.23, ty - .22, .03], .045, TOP);
+    add(new THREE.SphereGeometry(.04, 10, 10), SK, -.235, ty - .27, .04);
+  }
+  return g;
+}
+const bottegaio = person(5.0, 4.2, Math.PI, 1.68, true, false, 0xffffff, 0x2f3440, 0, 3, true);
+// arm reaching to the counter with a spatula
+person(4.35, 2.8, .25, 1.78, false, false, 0x9aa38a, 0x3b4252, 1, 0);   // customer at the counter
+person(3.85, 2.95, .1, 1.15, false, false, 0xe3b04b, 0x4a5a7a, 0, 1);    // child
+person(9.25, 1.95, Math.PI, 1.65, false, true, 0xb4643a, 0x2f3440, 0, 2); // seated: terracotta sweater
+person(8.0, 1.95, Math.PI, 1.65, false, true, 0x9aa38a, 0x5a4a3a, 2, 0);  // seated: sage sweater
+person(-2.4, 5.9, Math.PI / 2 + .5, 1.75, false, false, 0x6f6c8e, 0x2f3440, 1, 1); // passer-by on the street
+
+// ---------- lights ----------
+scene.add(new THREE.HemisphereLight(0xffefdc, 0xa8907a, 1.0));
+const sun = new THREE.DirectionalLight(0xffd2a8, 1.6);
+sun.position.set(-8, 9, 1.5); sun.target.position.set(4, 0, 2.5); scene.add(sun.target);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 30 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = .02;
+scene.add(sun);
+// pendant lamps over the counter
+[3.7, 5.0, 6.3].forEach((x, k) => {
+  cyl(.004, .004, 1.2, M.navy, x, HH - .6, CZ, 6);
+  const shade = new THREE.Mesh(new THREE.SphereGeometry(.2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xc9a26a, metalness: .9, roughness: .3, side: THREE.DoubleSide }));
+  shade.position.set(x, HH - 1.2, CZ); scene.add(shade);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(.05, 16, 16), new THREE.MeshStandardMaterial({ color: 0xfff1d6, emissive: 0xffd9a0, emissiveIntensity: 3 }));
+  bulb.position.set(x, HH - 1.24, CZ); scene.add(bulb);
+  const pl = new THREE.PointLight(0xffd8a6, 9, 5.5, 2); pl.position.set(x, HH - 1.3, CZ);
+  if (k === 1) { pl.castShadow = true; pl.shadow.mapSize.set(1024, 1024); pl.shadow.bias = -0.002; }
+  scene.add(pl);
+});
+const pantryLight = new THREE.SpotLight(0xffe2b8, 14, 6, .7, .6, 2); pantryLight.position.set(1.7, HH - .1, 1.2); pantryLight.target.position.set(1.7, 1.2, .2);
+scene.add(pantryLight, pantryLight.target);
+const seatLight = new THREE.PointLight(0xffdcae, 6, 5, 2); seatLight.position.set(8.6, 2.6, 2.4); scene.add(seatLight);
+
+// ---------- hotspots ----------
+const SPOTS = [
+  { n: 1, name: 'Open counter', p: [5.0, 1.25, CZ - .3], t: 'The open counter', d: 'Low (about 1 m) and without tall glass in front: the customer sees the hands, the spatula and the gelato. The carapine stay, because they protect quality, but they open towards the customer. It is the brightest point of the store: the moment of truth.' },
+  { n: 2, name: 'The pantry', p: [1.7, 2.75, .3], t: 'The pantry · la dispensa', d: 'Real ingredients to see, smell and touch, close to the window and visible from the street. It changes every month, with the season.' },
+  { n: 3, name: 'The ledger', p: [4.3, 2.65, D - .1], t: 'The ledger · il registro', d: 'Handwritten every morning by the bottegaio: today\'s flavours, origin and arrival date of the ingredient, and the name of who is serving. The store belongs to people, not to a chain.' },
+  { n: 4, name: 'The truth', p: [8.2, 2.3, D - .1], t: 'The truth, stated openly', d: 'Grom makes its gelato centrally, in Mappano. The sentence near the till says it openly, so that “Bottega” never suggests a fake lab: here the final gesture is made.' },
+  { n: 5, name: 'Seasons Passport', p: [7.25, 1.35, CZ - .25], t: 'The Seasons Passport', d: 'One stamp for every ritual, on the web app opened by the QR on the cup. The rewards are experiences, not discounts: choosing the seal, a name in the ledger, a preview of the harvest flavour.' },
+  { n: 6, name: 'Harvest table', p: [8.6, 1.15, 2.75], t: 'The harvest table', d: 'Seating for those who stay, and in calm hours the guided tasting of the harvest flavour. In the larger stores it hosts the harvest evening for passport holders.' },
+  { n: 7, name: 'The seal', p: [5.65, 1.32, CZ - .22], t: 'The seal', d: 'A piece of the ingredient placed by hand on top of every gelato: a hazelnut, a pistachio, a piece of zest. It is the signature of Bottega Grom and the photo customers post on their own.' },
+  { n: 8, name: 'Neighbourhood sign', p: [-.4, HH + .25, D / 2], t: 'A bottega, not a chain', d: 'Under GROM, the name of the neighbourhood: Bottega · Roma Pantheon. From the street the passer-by sees the sign, the pantry and the warm light on the counter.' },
+];
+const tagsEl = document.getElementById('tags');
+SPOTS.forEach(s => {
+  const el = document.createElement('div'); el.className = 'tag'; el.innerHTML = `<i>${s.n}</i><span>${s.name}</span>`;
+  el.addEventListener('click', () => showCard(s)); tagsEl.appendChild(el); s.el = el; s.v = new THREE.Vector3(...s.p);
+});
+const card = document.getElementById('card');
+function showCard(s) { document.getElementById('ct').textContent = s.t; document.getElementById('cp').textContent = s.d; card.style.display = 'block'; }
+document.getElementById('cardx').onclick = () => card.style.display = 'none';
+
+// ---------- journey tour ----------
+const STEPS = [
+  { k: 'Welcome', ph: '1 · Welcome', t: 'A bottega, not a chain', d: 'From the street the passer-by sees the neighbourhood\'s name under the sign, the pantry in the window and the warm light on the counter. Today 9 customers out of 11 walk in only because they pass by: here there is a reason to.', think: '“There is a person here.”', pos: [-6.2, 2.4, 6.4], tar: [1.5, 1.4, 2.5], card: 8 },
+  { k: 'Discovery', ph: '2 · Imagination and discovery', t: 'The pantry and the ledger', d: 'Real ingredients to see and smell, and a handwritten ledger with origin and arrival date. The customer understands where the gelato comes from before choosing it.', think: '“It comes from a real place.”', pos: [2.6, 1.65, 2.6], tar: [3.0, 1.6, 2.6], look: [1.6, 1.3, .3], card: 2 },
+  { k: 'Ritual', ph: '3 · Tasting and ritual', t: 'The counter ritual, in four beats', d: 'Reveal: the carapina opens towards you. Story: one sentence on the ingredient. Spatula: worked by hand, in front of you. Seal: a piece of the ingredient placed on top. About 90 seconds, almost all at the counter.', think: '“They made it for me, in front of me.”', pos: [5.75, 1.6, 2.15], tar: [5.0, 1.05, 3.75], card: 1 },
+  { k: 'Memory', ph: '4 · Memory and sharing', t: 'People share the craft', d: 'The seal is the photo customers post on their own, recognisable even without a logo. The QR on the cup opens the journey of the gelato and the ritual to watch again.', think: '“I\'ll tell people.”', pos: [5.45, 1.32, 2.95], tar: [5.65, 1.05, 3.33], card: 7 },
+  { k: 'Return', ph: '5 · Return and loyalty', t: 'The truth, the passport, the harvest', d: 'The truth sentence near the till, one stamp on the Seasons Passport for every ritual, and the harvest table for those who stay. The reward is an experience, not a discount.', think: '“I\'ll be back for the next one.”', pos: [6.3, 1.9, 1.0], tar: [8.4, 1.3, 3.2], card: 5 },
+];
+const stepsEl = document.getElementById('steps');
+STEPS.forEach((s, i) => { const b = document.createElement('button'); b.textContent = s.k; b.onclick = () => go(i); stepsEl.appendChild(b); });
+let cur = 0, anim = null;
+function go(i) {
+  cur = Math.max(0, Math.min(STEPS.length - 1, i)); const s = STEPS[cur];
+  [...stepsEl.children].forEach((b, k) => b.classList.toggle('on', k === cur));
+  document.getElementById('ph').textContent = s.ph; document.getElementById('pt').textContent = s.t;
+  document.getElementById('pp').textContent = s.d; document.getElementById('pk').textContent = s.think;
+  document.getElementById('next').textContent = cur === STEPS.length - 1 ? 'Start again ↺' : 'Next moment →';
+  const tar = s.look || s.tar;
+  anim = { s: performance.now(), p0: camera.position.clone(), q0: controls.target.clone(), p1: new THREE.Vector3(...s.pos), q1: new THREE.Vector3(...tar) };
+  if (window.innerWidth >= 700) showCard(SPOTS.find(x => x.n === s.card)); else card.style.display = 'none';
+}
+document.getElementById('next').onclick = () => go(cur === STEPS.length - 1 ? 0 : cur + 1);
+document.getElementById('prev').onclick = () => go(cur - 1);
+document.getElementById('free').onclick = () => {
+  card.style.display = 'none';
+  anim = { s: performance.now(), p0: camera.position.clone(), q0: controls.target.clone(), p1: new THREE.Vector3(12.5, 8.5, -5.5), q1: new THREE.Vector3(5, .8, 2.5) };
+};
+
+// ---------- loop ----------
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h;
+  camera.fov = w < 700 ? 62 : 50; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
+camera.position.set(-6.2, 2.4, 6.4); controls.target.set(1.5, 1.4, 2.5);
+const tmp = new THREE.Vector3(), clock = new THREE.Clock();
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function tick() {
+  const dt = Math.min(clock.getDelta(), .05), et = clock.elapsedTime;
+  if (anim) {
+    anim.t = Math.min(1, (performance.now() - anim.s) / 1500); const e = ease(anim.t);
+    camera.position.lerpVectors(anim.p0, anim.p1, e); controls.target.lerpVectors(anim.q0, anim.q1, e);
+    if (anim.t >= 1) anim = null;
+  }
+  controls.update();
+  // the reveal: the first carapina opens and closes slowly
+  reveal.hinge.rotation.x = -1.25 * (0.5 - 0.5 * Math.cos(et * 0.9));
+  // dollhouse cut-away: hide walls between the camera and the room
+  walls.forEach(w => { tmp.subVectors(camera.position, w.point); w.m.visible = tmp.dot(w.normal) > -0.05; });
+  renderer.render(scene, camera);
+  // tags
+  const W2 = window.innerWidth / 2, H2 = window.innerHeight / 2;
+  SPOTS.forEach(s => {
+    tmp.copy(s.v).project(camera);
+    const behind = tmp.z > 1, d = camera.position.distanceTo(s.v);
+    s.el.style.left = (tmp.x * W2 + W2) + 'px'; s.el.style.top = (-tmp.y * H2 + H2) + 'px';
+    s.el.style.opacity = behind || d > 18 ? 0 : 1; s.el.style.pointerEvents = behind ? 'none' : 'auto';
+  });
+  requestAnimationFrame(tick);
+}
+go(0); anim = null; camera.position.set(-6.2, 2.4, 6.4); controls.target.set(1.5, 1.4, 2.5);
+document.getElementById('loading').style.display = 'none';
+tick();
+})();
+</script>
+</body>
+</html>
